@@ -19,8 +19,8 @@ Make sure you select a proper Cache Driver.
 
 # Endpoints
 
-`/api/stats`
+`/` 
 
-`/api/stats/{country}`
+`/{country}`
 
 Returns wrapped data with additional `last_fetched` field (UNIX Timestamp)
