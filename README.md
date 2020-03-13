@@ -15,6 +15,8 @@ https://laravel.com/docs/7.x/scheduling
 ``* * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
 ``
 
+Make sure you select a proper Cache Driver.
+
 # Endpoints
 
 `/api/stats`
