@@ -116,8 +116,8 @@ class Fetch extends Command
     private function handleRow($row) {
         $country = $this->stripHtml($row->innerHtml);
 
-        // Remove the extra character on total
-        if ($country === 'Total:') {
+        // Api has changed, to keep backwards compatibiliy we rename World to Total
+        if ($country === 'World') {
             $country = 'Total';
         }
 
