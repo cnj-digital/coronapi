@@ -66,14 +66,20 @@ class Fetch extends Command
         }
 
         $dom->load($result);
-        $rows = $dom->find('table > tbody > tr');
+        $rows = $dom->find('#main_table_countries_today > tbody:nth-child(2) > tr');
 
         $items = [];
 
         foreach ($rows as $row) {
             $dom->load($row);
-            $items[] = $this->handleRow($countryRow = $row->find('td'));
+
+            if ($row->find('td')->count() !== 0) {
+                $items[] = $this->handleRow($countryRow = $row->find('td'));
+            }
+
         }
+
+        // dd('gone');
 
         // If we have any stats, cache them
         if (count($items)) {
@@ -114,7 +120,7 @@ class Fetch extends Command
      * @return array
      */
     private function handleRow($row) {
-        $country = $this->stripHtml($row->innerHtml);
+        $country = $this->stripHtml($row[1]->innerHtml);
 
         // Api has changed, to keep backwards compatibiliy we rename World to Total
         if ($country === 'World') {
@@ -123,14 +129,14 @@ class Fetch extends Command
 
         return [
             'country' => $country,
-            'total_cases' => $this->formatNumber($row[1]->innerHtml),
-            'new_cases' => $this->formatNumber($row[2]->innerHtml),
-            'total_deaths' => $this->formatNumber($row[3]->innerHtml),
-            'new_deaths' => $this->formatNumber($row[4]->innerHtml),
-            'total_recovered' => $this->formatNumber($row[5]->innerHtml),
-            'active_cases' => $this->formatNumber($row[6]->innerHtml),
-            'serious_cases' => $this->formatNumber($row[7]->innerHtml),
-            'cases_m_pop' => $this->stripHtml($row[8]->innerHtml)
+            'total_cases' => $this->formatNumber($row[2]->innerHtml),
+            'new_cases' => $this->formatNumber($row[3]->innerHtml),
+            'total_deaths' => $this->formatNumber($row[4]->innerHtml),
+            'new_deaths' => $this->formatNumber($row[5]->innerHtml),
+            'total_recovered' => $this->formatNumber($row[6]->innerHtml),
+            'active_cases' => $this->formatNumber($row[7]->innerHtml),
+            'serious_cases' => $this->formatNumber($row[8]->innerHtml),
+            'cases_m_pop' => $this->stripHtml($row[9]->innerHtml)
         ];
     }
 
