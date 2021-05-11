@@ -75,7 +75,7 @@ class Fetch extends Command
         foreach ($rows as $row) {
             $dom->load($row);
 
-            if ($row->find('td')->count() !== 0 && $index > 8 && $index) {
+            if ($row->find('td')->count() !== 0 && $index > 7) {
                 $items[] = $this->handleRow($countryRow = $row->find('td'));
             }
 
@@ -137,9 +137,9 @@ class Fetch extends Command
             'total_deaths' => $this->formatNumber($row[4]->innerHtml),
             'new_deaths' => $this->formatNumber($row[5]->innerHtml),
             'total_recovered' => $this->formatNumber($row[6]->innerHtml),
-            'active_cases' => $this->formatNumber($row[7]->innerHtml),
-            'serious_cases' => $this->formatNumber($row[8]->innerHtml),
-            'cases_m_pop' => $this->stripHtml($row[9]->innerHtml)
+            'active_cases' => $this->formatNumber($row[8]->innerHtml),
+            'serious_cases' => $this->formatNumber($row[9]->innerHtml),
+            'cases_m_pop' => $this->stripHtml($row[10]->innerHtml)
         ];
     }
 
