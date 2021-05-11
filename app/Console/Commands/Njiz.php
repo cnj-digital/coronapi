@@ -18,7 +18,7 @@ class Njiz extends Command
      *
      * @var string
      */
-    protected $url = 'https://www.nijz.si/sl/dnevno-spremljanje-okuzb-s-sars-cov-2-covid-19';
+    protected $url = 'https://www.gov.si/teme/koronavirus-sars-cov-2/';
 
     /**
      * User agent string for curl
@@ -39,7 +39,7 @@ class Njiz extends Command
      *
      * @var string
      */
-    protected $description = 'Fetches API data from NJIZ';
+    protected $description = 'Fetches API data from NJIZ/GOV';
 
     /**
      * Create a new command instance.
@@ -65,65 +65,25 @@ class Njiz extends Command
             return;
         }
 
-         $dom->load($result);
+        $dom->load($result);
 
-        // Find the first table (sometimes we have 2, only interested in the first one)
-        $content = $dom->find('div.content > div.field.field-name-body.field-type-text-with-summary.field-label-hidden > div > div > *');
+        $daily_tests = $this->stripDots($dom->find('#e91362 > div > div > ul > li:nth-child(1) > p')->text);
+        preg_match('/^PCR:(?P<cases>\d+)/', $daily_tests, $matches);
 
-        // Content is the whole list of items, we are interested in the first table, and the paragraph before the first table
-        $table_index = collect($content->toArray())->search(function ($item, $key) {
-            return $item->tag->name() === 'table';
-        });
-
-        // If table index not found or the table is at the front (we don't have a date description) return
-        if ($table_index === false || $table_index <= 0) {
-            return;
+        if (\array_key_exists('cases', $matches)) {
+            $daily_tests = $matches['cases'];
+        } else {
+            $daily_tests = 0;
         }
 
         $output = [
-            'description' => $this->stripHtml($content->toArray()[$table_index - 1]->innerHtml),
+            'description' => $dom->find('#e91362 > div > div > div.remark > p')->innerHtml,
             'total_tests' => '/',
             'confirmed_cases' => '/',
-            'daily_tests' => '/',
-            'daily_cases' => '/',
+            'daily_tests' => $daily_tests,
+            'daily_cases' => $this->stripDots($dom->find('#e91362 > div > div > ul > li:nth-child(2) > div.values.green > p.val')->text),
+            'deaths' => $this->stripDots($dom->find('#e91362 > div > div > ul > li:nth-child(7) > div.values.black > p.val')->text)
         ];
-
-        $rows = collect($content->toArray()[$table_index]->find('tbody > tr')->toArray());
-
-        // Number of tests in the previous day
-        $tests_match = 'opravljenih testov v preteklem dnevu';
-        $tests_index = $rows->search(function($item, $key) use ($tests_match) {
-            return strpos($item->innerHtml, $tests_match);
-        });
-        if ($tests_index !== false) {
-            $output['daily_tests'] = $this->stripHtml($rows->get($tests_index)->firstChild()->innerHtml);
-        }
-
-        // We are fetching number of new cases in the previous day
-        $cases_match = 'potrjenih primerov v preteklem dnevu';
-        $cases_index = $rows->search(function($item, $key) use ($cases_match) {
-            return strpos($item->innerHtml, $cases_match);
-        });
-        if ($cases_index !== false) {
-            $output['daily_cases'] = $this->stripHtml($rows->get($cases_index)->firstChild()->innerHtml);
-        }
-
-        $total_tests_match = 'opravljenih testov';
-        $total_tests_index = $rows->search(function($item, $key) use ($total_tests_match) {
-            return strpos($item->innerHtml, $total_tests_match);
-        });
-        if ($total_tests_index !== false) {
-            $output['total_tests'] = $this->stripHtml($rows->get($total_tests_index)->firstChild()->innerHtml);
-        }
-
-        // We are fetching number of new cases in the previous day
-        $confirmed_cases_match = 'potrjenih primerov';
-        $confirmed_cases_index = $rows->search(function($item, $key) use ($confirmed_cases_match) {
-            return strpos($item->innerHtml, $confirmed_cases_match);
-        });
-        if ($confirmed_cases_index !== false) {
-            $output['confirmed_cases'] = $this->stripHtml($rows->get($confirmed_cases_index)->firstChild()->innerHtml);
-        }
 
         Cache::put('njiz', $output, self::CACHE_TIME);
 
@@ -136,7 +96,8 @@ class Njiz extends Command
      *
      * @return bool|string
      */
-    private function fetch($url, $agent) {
+    private function fetch($url, $agent)
+    {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_VERBOSE, true);
@@ -161,7 +122,19 @@ class Njiz extends Command
      * @param $input
      * @return string
      */
-    private function stripHtml($input) {
+    private function stripHtml($input)
+    {
         return trim(strip_tags($input));
+    }
+
+    /**
+     * Strips html tags and trims the output
+     *
+     * @param $input
+     * @return string
+     */
+    private function stripDots($input)
+    {
+        return str_replace(['.', ' '], '', $input);
     }
 }
