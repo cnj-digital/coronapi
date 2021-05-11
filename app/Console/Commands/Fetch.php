@@ -68,18 +68,19 @@ class Fetch extends Command
         $dom->load($result);
         $rows = $dom->find('#main_table_countries_today > tbody:nth-child(2) > tr');
 
-        $items = [];
+        $index = 0;
+
+        // ini_set("memory_limit", "2G");
 
         foreach ($rows as $row) {
             $dom->load($row);
 
-            if ($row->find('td')->count() !== 0) {
+            if ($row->find('td')->count() !== 0 && $index > 8 && $index) {
                 $items[] = $this->handleRow($countryRow = $row->find('td'));
             }
 
+            $index++;
         }
-
-        // dd('gone');
 
         // If we have any stats, cache them
         if (count($items)) {
@@ -96,7 +97,8 @@ class Fetch extends Command
      *
      * @return bool|string
      */
-    private function fetch($url, $agent) {
+    private function fetch($url, $agent)
+    {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_VERBOSE, true);
@@ -119,7 +121,8 @@ class Fetch extends Command
      * @param $row
      * @return array
      */
-    private function handleRow($row) {
+    private function handleRow($row)
+    {
         $country = $this->stripHtml($row[1]->innerHtml);
 
         // Api has changed, to keep backwards compatibiliy we rename World to Total
@@ -162,7 +165,8 @@ class Fetch extends Command
      * @param $input
      * @return string
      */
-    private function stripHtml($input) {
+    private function stripHtml($input)
+    {
         return trim(strip_tags($input));
     }
 }
