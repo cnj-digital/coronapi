@@ -82,7 +82,7 @@ class Njiz extends Command
             'confirmed_cases' => '/',
             'daily_tests' => $daily_tests,
             'daily_cases' => $this->stripDots($dom->find('#e91362 > div > div > ul > li:nth-child(2) > div.values.green > p.val')->text),
-            'deaths' => $this->stripDots($dom->find('#e91362 > div > div > ul > li:nth-child(7) > div.values.black > p.val')->text)
+            'daily_deaths' => $this->stripDots($dom->find('#e91362 > div > div > ul > li:nth-child(7) > div.values.black > p.val')->text)
         ];
 
         Cache::put('njiz', $output, self::CACHE_TIME);
