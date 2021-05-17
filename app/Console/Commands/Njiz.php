@@ -67,22 +67,39 @@ class Njiz extends Command
 
         $dom->load($result);
 
-        $daily_tests = $this->stripDots($dom->find('#e91362 > div > div > ul > li:nth-child(1) > p')->text);
-        preg_match('/^PCR:(?P<cases>\d+)/', $daily_tests, $matches);
+        $list = $dom->find('ul.number-presentation');
 
-        if (\array_key_exists('cases', $matches)) {
-            $daily_tests = $matches['cases'];
-        } else {
-            $daily_tests = 0;
+        $items = $list->find('li');
+        $data = [
+            'daily_tests' => 0,
+            'daily_cases' => 0,
+            'daily_deaths' => 0,
+        ];
+
+        for ($i = 0; $i < count($items); $i++) {
+            $title = $items[$i]->find('.number-title')->text;
+
+            if (str_contains(mb_strtolower($title), 'dnevno opravljeni test')) {
+                $daily_tests = $items[$i]->find('.caption')->text;
+                preg_match('/^PCR: (?P<cases>.*), HAGT/', $daily_tests, $matches);
+
+                if (\array_key_exists('cases', $matches)) {
+                    $data['daily_tests'] = str_replace('.', ',', $matches['cases']);
+                }
+            } elseif (str_contains(mb_strtolower($title), 'dnevno potrjene okužb')) {
+                $data['daily_cases'] = str_replace('.', ',', $items[$i]->find('.val')->text);
+            } elseif (str_contains(mb_strtolower($title), 'umrl')) {
+                $data['daily_deaths'] = str_replace('.', ',', $items[$i]->find('.val')->text);
+            }
         }
 
         $output = [
             'description' => $dom->find('#e91362 > div > div > div.remark > p')->innerHtml,
             'total_tests' => '/',
             'confirmed_cases' => '/',
-            'daily_tests' => $daily_tests,
-            'daily_cases' => $this->stripDots($dom->find('#e91362 > div > div > ul > li:nth-child(2) > div.values.red > p.val')->text),
-            'daily_deaths' => $this->stripDots($dom->find('#e91362 > div > div > ul > li:nth-child(7) > div.values.black > p.val')->text)
+            'daily_tests' => $data['daily_tests'],
+            'daily_cases' => $data['daily_cases'],
+            'daily_deaths' => $data['daily_deaths'],
         ];
 
         Cache::put('njiz', $output, self::CACHE_TIME);
